@@ -1,7 +1,9 @@
 from selenium import webdriver
 import time
+from selenium.common.exceptions import ElementClickInterceptedException
 
-WEBDRIVER_PATH = "/Users/patrickmenendez/PycharmProjects/ig_bot/chromedriver 3"
+
+WEBDRIVER_PATH = "/Users/patrickmenendez/PycharmProjects/ig_bot/chromedriver"
 URL = "https://www.instagram.com/"
 
 # Setting up web driver
@@ -11,6 +13,7 @@ options.add_argument("--disable-notifications")
 options.add_experimental_option("mobileEmulation",mobile_emulation)
 
 driver = webdriver.Chrome(WEBDRIVER_PATH, options=options)
+
 
 def select_login():
     # Opening webpage
@@ -25,6 +28,7 @@ def select_login():
     # change page to login
         mobile_login_button.click()
 
+
 def insert_email():
     email_input_x_path = "/html/body/div[1]/section/main/article/div/div/div/form/div[1]/div[3]/div/label/input"
 
@@ -37,6 +41,7 @@ def insert_email():
         email_input.send_keys("allprogrammingmx@gmail.com")
         print("email inserted")
 
+
 def insert_password():
     password_input_x_path = "/html/body/div[1]/section/main/article/div/div/div/form/div[1]/div[4]/div/label/input"
     try:
@@ -45,6 +50,7 @@ def insert_password():
         insert_password()
     else:
         password_input.send_keys("pmr292001")
+
 
 def click_login():
     login_button_x_path = "/html/body/div[1]/section/main/article/div/div/div/form/div[1]/div[6]/button"
@@ -61,8 +67,6 @@ def login():
     insert_password()
     click_login()
 
-
-
     time.sleep(2)
 
     #not_not_button_xpath = "/html/body/div[1]/section/main/div/div/div/button"
@@ -74,48 +78,86 @@ def login():
     #cancel_button = driver.find_element_by_xpath(cancel_button_xpath)
     #cancel_button.click()
 
+
 def find_account(username):
     URL = f"https://www.instagram.com/{username}/"
     driver.get(URL)
     time.sleep(2)
 
+
+def get_username_element(index):
+    username_xpath = f"/html/body/div[1]/section/main/div/ul/div/li[{index}]/div/div[1]/div[2]/div[1]/a"
+    username = driver.find_element_by_xpath(username_xpath).text
+    return username
+
+
+def current_user_is_self(username):
+    if username == "allprogrammingmx":
+        print("This is you")
+        return True
+
+
+def get_button(index):
+    xpath = f"/html/body/div[1]/section/main/div/ul/div/li[{index}]/div/div[2]/button"
+    button = driver.find_element_by_xpath(xpath)
+    print(button.text)
+    return button
+
+
+def current_user_is_already_followed(button):
+    if button.text != "Follow":
+        print("User was already followed, skipping it")
+        # driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index} )")
+
+
+def click_follow(button):
+    # current user status is unknown, set it to false
+    following = False
+    # while the account is not following the user, do the following:
+    while not following:
+        # click the follow button and wait 3 seconds for the text to change
+        button.click()
+        time.sleep(3)
+        # if the text changes to "Following" or "Requested", continue with the next row
+        if button.text == "Following" or button.text == "Requested":
+            following = True
+
+
 def init_follow():
     index = 1
-    scroll_height = 40
+    scroll_height = 38
     followers_button_xpath = "/html/body/div[1]/section/main/div/ul/li[2]/a"
     (followers_button := driver.find_element_by_xpath(followers_button_xpath)).click()
     time.sleep(2)
     for _ in range(200):
 
-        username_xpath = f"/html/body/div[1]/section/main/div/ul/div/li[{index}]/div/div[1]/div[2]/div[1]/a"
-        username = driver.find_element_by_xpath(username_xpath).text
-        if username == "allprogrammingmx":
-            print("This is you")
+        username = get_username_element(index)
+        # check if current username is the account itself
+        if current_user_is_self(username):
             index += 1
-            driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index})")
             continue
 
-        xpath = f"/html/body/div[1]/section/main/div/ul/div/li[{index}]/div/div[2]/button"
-        button = driver.find_element_by_xpath(xpath)
-        print(button.text)
-
-        if button.text != "Follow":
-            print("User was already followed, skipping it")
+        button = get_button(index)
+        # check if the user is already followed
+        if current_user_is_already_followed(button):
             index += 1
-            driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index} )")
             continue
 
         time.sleep(2)
-        button.click()
+        try:
+            click_follow(button)
+            # If the button is not found, scroll
+        except ElementClickInterceptedException:
+            index += 1
+            driver.execute_script(f"window.scrollTo(0, {scroll_height * 5} * {index})")
         index += 1
         time.sleep(0.5)
-        driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index})")
-
+        #driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index})")
 
 
 if __name__ == '__main__':
 
     login()
-    find_account("developers.reality")
+    find_account("node.js_learning")
     init_follow()
 
