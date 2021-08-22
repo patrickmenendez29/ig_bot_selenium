@@ -123,11 +123,19 @@ def click_follow(button):
             following = True
 
 
+def __scroll_up(index, scroll_height):
+    driver.execute_script(f"window.scrollTo(0, {scroll_height * 5} * {index})")
+
+
+def go_to_followers():
+    followers_button_xpath = "/html/body/div[1]/section/main/div/ul/li[2]/a"
+    driver.find_element_by_xpath(followers_button_xpath).click()
+
+
 def init_follow():
     index = 1
     scroll_height = 38
-    followers_button_xpath = "/html/body/div[1]/section/main/div/ul/li[2]/a"
-    (followers_button := driver.find_element_by_xpath(followers_button_xpath)).click()
+    go_to_followers()
     time.sleep(2)
     for _ in range(200):
 
@@ -149,10 +157,9 @@ def init_follow():
             # If the button is not found, scroll
         except ElementClickInterceptedException:
             index += 1
-            driver.execute_script(f"window.scrollTo(0, {scroll_height * 5} * {index})")
+            __scroll_up(index, scroll_height)
         index += 1
         time.sleep(0.5)
-        #driver.execute_script(f"window.scrollTo(0, {scroll_height} * {index})")
 
 
 if __name__ == '__main__':
