@@ -156,4 +156,9 @@ class SeleniumManager:
             self.index += 1
             time.sleep(0.5)
 
+    def start(self):
+        self.login()
+        self.find_account()
+        self.init_follow()
+
 
